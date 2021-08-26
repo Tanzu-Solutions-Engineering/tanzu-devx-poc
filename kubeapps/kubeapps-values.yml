@@ -1,0 +1,16 @@
+useHelm3: true
+allowNamespaceDiscovery: true
+ingress:
+  enabled: true
+  certManager: true
+  tls: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    ingress.kubernetes.io/ssl-redirect: "true"
+    ingress.kubernetes.io/proxy-body-size: "0"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    kubernetes.io/tls-acme: "true"
+apprepository:
+  initialRepos:
+    - name: tac-repo
+      url: https://charts.trials.tac.bitnami.com/demo
