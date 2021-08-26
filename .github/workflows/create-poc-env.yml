@@ -131,12 +131,12 @@ jobs:
       run: |
         
         # Relocate Images to a private registry
-        # docker login registry.${{ env.DOMAIN_NAME }} -u '${{ secrets.HARBOR_USERNAME }}' -p '${{ secrets.HARBOR_PASSWORD }}'
+        docker login registry.${{ env.DOMAIN_NAME }} -u '${{ secrets.HARBOR_USERNAME }}' -p '${{ secrets.HARBOR_PASSWORD }}'
         docker login registry.pivotal.io -u '${{ secrets.TANZU_NETWORK_USERNAME }}' -p '${{ secrets.TANZU_NETWORK_PASSWORD }}'
-        # imgpkg copy -b "registry.pivotal.io/build-service/bundle:${{ env.TBS_VERSION }}" --to-repo registry.${{ env.DOMAIN_NAME }}/tbs/build-service
+        imgpkg copy -b "registry.pivotal.io/build-service/bundle:${{ env.TBS_VERSION }}" --to-repo registry.${{ env.DOMAIN_NAME }}/tbs/build-service
   
         # Pull the Tanzu Build Service bundle image locally
-        # imgpkg pull -b "registry.${{ env.DOMAIN_NAME }}/tbs/build-service:${{ env.TBS_VERSION }}" -o /tmp/bundle
+        imgpkg pull -b "registry.${{ env.DOMAIN_NAME }}/tbs/build-service:${{ env.TBS_VERSION }}" -o /tmp/bundle
         
         curl https://letsencrypt.org/certs/lets-encrypt-r3-cross-signed.pem -o /tmp/letsencrypt-ca.crt
         
