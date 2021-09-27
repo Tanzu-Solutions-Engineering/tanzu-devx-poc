@@ -57,56 +57,56 @@ jobs:
     - name: Install Kpack CLI (kp)
       run: |
         wget -O kp --header="Authorization: Token ${{ secrets.TANZU_NETWORK_API_TOKEN }}" ${{ env.KP_CLI_LINUX_RELEASE }} && chmod +x kp && sudo mv kp /usr/local/bin
-    - name: Install Tanzu Build Service
-      run: |
-
-        # Relocate Images to a private registry
-        docker login registry.${{ env.DOMAIN_NAME }} -u '${{ secrets.HARBOR_USERNAME }}' -p '${{ secrets.HARBOR_PASSWORD }}'
-        docker login registry.pivotal.io -u '${{ secrets.TANZU_NETWORK_USERNAME }}' -p '${{ secrets.TANZU_NETWORK_PASSWORD }}'
-        imgpkg copy -b "registry.pivotal.io/build-service/bundle:${{ env.TBS_VERSION }}" --to-repo registry.${{ env.DOMAIN_NAME }}/library/build-service
-
-        # Pull the Tanzu Build Service bundle image locally
-        imgpkg pull -b "registry.${{ env.DOMAIN_NAME }}/library/build-service:${{ env.TBS_VERSION }}" -o /tmp/bundle
-
-        curl https://letsencrypt.org/certs/lets-encrypt-r3-cross-signed.pem -o /tmp/letsencrypt-ca.crt
-
-        ytt -f /tmp/bundle/values.yaml \
-            -f /tmp/bundle/config/ \
-            -f /tmp/letsencrypt-ca.crt \
-            -v docker_repository='registry.${{ env.DOMAIN_NAME }}/library/build-service' \
-            -v docker_username='${{ secrets.HARBOR_USERNAME }}' \
-            -v docker_password='${{ secrets.HARBOR_PASSWORD }}' \
-            | kbld -f /tmp/bundle/.imgpkg/images.yml -f- \
-            | kapp deploy -a tanzu-build-service -f- -y
-
-    - name: Import Tanzu Build Service Dependencies
-      run: |
-        DESCRIPTOR_FILE="descriptor-${{ env.TBS_DEPENDENCIES_VERSION }}.yaml"
-        echo $DESCRIPTOR_FILE
-        wget -O $DESCRIPTOR_FILE --header="Authorization: Token ${{ secrets.TANZU_NETWORK_API_TOKEN }}" ${{ env.TBS_DEPENDENCIES }}
-        kp import -f $DESCRIPTOR_FILE  --registry-ca-cert-path /tmp/letsencrypt-ca.crt
-    - name: Verify TBS Installation
-      run: kp clusterbuilder list
-
-#     - name: Install Application Accelerator
+#     - name: Install Tanzu Build Service
 #       run: |
-#         # Install full Flux2 system
-#         kapp deploy -a flux -f https://github.com/fluxcd/flux2/releases/download/v0.15.0/install.yaml
 
-#         # Pull and extract the installation bundle
-#         imgpkg pull -b registry.pivotal.io/app-accelerator/acc-install-bundle:${{ env.ACC_VERSION }} \
-#           -o /tmp/acc-install-bundle
+#         # Relocate Images to a private registry
+#         docker login registry.${{ env.DOMAIN_NAME }} -u '${{ secrets.HARBOR_USERNAME }}' -p '${{ secrets.HARBOR_PASSWORD }}'
+#         docker login registry.pivotal.io -u '${{ secrets.TANZU_NETWORK_USERNAME }}' -p '${{ secrets.TANZU_NETWORK_PASSWORD }}'
+#         imgpkg copy -b "registry.pivotal.io/build-service/bundle:${{ env.TBS_VERSION }}" --to-repo registry.${{ env.DOMAIN_NAME }}/library/build-service
 
-#         kubectl create namespace accelerator-system --dry-run=client -o yaml  | kubectl apply -f -
+#         # Pull the Tanzu Build Service bundle image locally
+#         imgpkg pull -b "registry.${{ env.DOMAIN_NAME }}/library/build-service:${{ env.TBS_VERSION }}" -o /tmp/bundle
 
-#         kubectl create secret \
-#           docker-registry acc-image-regcred -n accelerator-system \
-#           --docker-server=registry.pivotal.io \
-#           --docker-username='${{ secrets.TANZU_NETWORK_USERNAME }}' \
-#           --docker-password='${{ secrets.TANZU_NETWORK_PASSWORD }}'
+#         curl https://letsencrypt.org/certs/lets-encrypt-r3-cross-signed.pem -o /tmp/letsencrypt-ca.crt
 
-#         ytt -f /tmp/acc-install-bundle/config -f /tmp/acc-install-bundle/values.yml --data-values-env acc  \
-#           | kbld -f /tmp/acc-install-bundle/.imgpkg/images.yml -f- \
-#           | kapp deploy -y -n accelerator-system -a accelerator -f-
+#         ytt -f /tmp/bundle/values.yaml \
+#             -f /tmp/bundle/config/ \
+#             -f /tmp/letsencrypt-ca.crt \
+#             -v docker_repository='registry.${{ env.DOMAIN_NAME }}/library/build-service' \
+#             -v docker_username='${{ secrets.HARBOR_USERNAME }}' \
+#             -v docker_password='${{ secrets.HARBOR_PASSWORD }}' \
+#             | kbld -f /tmp/bundle/.imgpkg/images.yml -f- \
+#             | kapp deploy -a tanzu-build-service -f- -y
 
-#         kubectl apply -f https://raw.githubusercontent.com/sample-accelerators/metadata/main/new-accelerator.yaml
+#     - name: Import Tanzu Build Service Dependencies
+#       run: |
+#         DESCRIPTOR_FILE="descriptor-${{ env.TBS_DEPENDENCIES_VERSION }}.yaml"
+#         echo $DESCRIPTOR_FILE
+#         wget -O $DESCRIPTOR_FILE --header="Authorization: Token ${{ secrets.TANZU_NETWORK_API_TOKEN }}" ${{ env.TBS_DEPENDENCIES }}
+#         kp import -f $DESCRIPTOR_FILE  --registry-ca-cert-path /tmp/letsencrypt-ca.crt
+#     - name: Verify TBS Installation
+#       run: kp clusterbuilder list
+
+    - name: Install Application Accelerator
+      run: |
+        # Install full Flux2 system
+        kapp deploy -a flux -f https://github.com/fluxcd/flux2/releases/download/v0.15.0/install.yaml
+
+        # Pull and extract the installation bundle
+        imgpkg pull -b registry.pivotal.io/app-accelerator/acc-install-bundle:${{ env.ACC_VERSION }} \
+          -o /tmp/acc-install-bundle
+
+        kubectl create namespace accelerator-system --dry-run=client -o yaml  | kubectl apply -f -
+
+        kubectl create secret \
+          docker-registry acc-image-regcred -n accelerator-system \
+          --docker-server=registry.pivotal.io \
+          --docker-username='${{ secrets.TANZU_NETWORK_USERNAME }}' \
+          --docker-password='${{ secrets.TANZU_NETWORK_PASSWORD }}'
+
+        ytt -f /tmp/acc-install-bundle/config -f /tmp/acc-install-bundle/values.yml --data-values-env acc  \
+          | kbld -f /tmp/acc-install-bundle/.imgpkg/images.yml -f- \
+          | kapp deploy -y -n accelerator-system -a accelerator -f-
+
+        kubectl apply -f https://raw.githubusercontent.com/sample-accelerators/metadata/main/new-accelerator.yaml
