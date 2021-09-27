@@ -1,4 +1,4 @@
-name: Create POC Environment
+name: 01_Create_POC_Environment
 
 # Controls when the workflow will run
 
@@ -44,10 +44,6 @@ jobs:
         helm repo add bitnami https://charts.bitnami.com/bitnami
         helm repo add jetstack https://charts.jetstack.io
         helm repo update
-
-    - name: Update file permissions
-      run: |
-        chmod -R +x "${GITHUB_WORKSPACE}/scripts"
 
 #     - name: Install Cert-Manager
 #       run: |
