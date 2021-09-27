@@ -30,8 +30,6 @@ jobs:
 
     - name: Install Helm Tool
       uses: azure/setup-helm@v1
-#       with:
-#         version: 3.5.2
       id: install_helm
 
     - name: Login to Azure
@@ -51,10 +49,6 @@ jobs:
         helm repo add bitnami https://charts.bitnami.com/bitnami
         helm repo add jetstack https://charts.jetstack.io
         helm repo update
-
-    - name: Update file permissions
-      run: |
-        chmod -R +x "${GITHUB_WORKSPACE}/scripts"
 
     - name: Install Carvel CLI tools (kapp, ytt, kbld, imgpkg, and vendir)
       run: |
