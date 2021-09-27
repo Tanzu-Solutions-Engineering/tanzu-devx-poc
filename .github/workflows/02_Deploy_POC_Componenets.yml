@@ -101,7 +101,7 @@ jobs:
         imgpkg pull -b registry.pivotal.io/app-accelerator/acc-install-bundle:${{ env.ACC_VERSION }} \
           -o /tmp/acc-install-bundle
         kubectl create namespace accelerator-system --dry-run=client -o yaml  | kubectl apply -f -
-        export acc_registry__server=registry.pivotal.io
+        export acc_registry__server=registry.tanzu.vmware.com
         export acc_registry__username='${{ secrets.TANZU_NETWORK_USERNAME }}'
         export acc_registry__password='${{ secrets.TANZU_NETWORK_PASSWORD }}'
         
