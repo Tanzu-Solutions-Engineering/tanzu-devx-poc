@@ -16,6 +16,8 @@ env:
   TBS_DEPENDENCIES_VERSION: 100.0.150
   TBS_DEPENDENCIES: https://network.pivotal.io/api/v2/products/tbs-dependencies/releases/943744/product_files/1022067/download
   ACC_VERSION: 0.3.0
+  ACC_SAMPLE_FILE: sample-accelerators-0-3.yaml
+  ACC_SAMPLE_DOWNLOAD: https://network.pivotal.io/api/v2/products/app-accelerator/releases/965559/product_files/1049989/download
 
 jobs:
   deploy:
@@ -110,3 +112,9 @@ jobs:
           | kapp deploy -y -n accelerator-system -a accelerator -f-
 
         kubectl apply -f https://raw.githubusercontent.com/sample-accelerators/metadata/main/new-accelerator.yaml
+    
+    - name: Install OOTB Application Accelerator Samples
+      run: |
+        wget -O $${{ env.ACC_SAMPLE_FILE }} --header="Authorization: Token ${{ secrets.TANZU_NETWORK_API_TOKEN }}" ${{ env.ACC_SAMPLE_DOWNLOAD }}
+        kubectl apply -f $${{ env.ACC_SAMPLE_FILE }}
+
