@@ -1,0 +1,120 @@
+name: Create POC Environment
+
+# Controls when the workflow will run
+
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+env:
+  CLUSTER_RESOURCE_GROUP: MorganStanleyPOC
+  CLUSTER_NAME: TanzuCluster
+  DOMAIN_NAME: ms.hyan.us
+  AZURE_STORAGE_ACCOUNT_NAME: msharbor
+  KP_CLI_LINUX_RELEASE: https://network.pivotal.io/api/v2/products/build-service/releases/925788/product_files/1000629/download
+  TBS_VERSION: 1.2.2
+  TBS_DEPENDENCIES_VERSION: 100.0.150
+  TBS_DEPENDENCIES: https://network.pivotal.io/api/v2/products/tbs-dependencies/releases/943744/product_files/1022067/download
+  ACC_VERSION: 0.2.0
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout the latest code from main.
+      uses: actions/checkout@main
+
+    - name: Install Kubectl Tool
+      uses: azure/setup-kubectl@v1
+      id: install_kubectl
+
+    - name: Install Helm Tool
+      uses: azure/setup-helm@v1
+#       with:
+#         version: 3.5.2
+      id: install_helm
+
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: '${{ secrets.AZURE_ACCESS }}'
+
+    - name: Set the target Azure Kubernetes Service (AKS) cluster
+      uses: azure/aks-set-context@v1
+      with:
+        creds: '${{ secrets.AZURE_ACCESS }}'
+        cluster-name: ${{ env.CLUSTER_NAME }}
+        resource-group: ${{ env.CLUSTER_RESOURCE_GROUP }}
+
+    - name: Add and Update Helm repos
+      run: |
+        helm repo add bitnami https://charts.bitnami.com/bitnami
+        helm repo add jetstack https://charts.jetstack.io
+        helm repo update
+
+    - name: Update file permissions
+      run: |
+        chmod -R +x "${GITHUB_WORKSPACE}/scripts"
+
+    - name: Install Cert-Manager
+      run: |
+        kubectl create namespace cert-manager --dry-run=client -o yaml  | kubectl apply -f -
+
+        # Label the cert-manager namespace to disable resource validation
+        kubectl label namespace cert-manager certmanager.k8s.io/disable-validation=true
+
+        # Install cert-manager
+        helm install \
+          cert-manager jetstack/cert-manager \
+          --namespace cert-manager \
+          --version v1.4.1 \
+          --set installCRDs=true
+
+    - name: Install Contour Ingress Controller
+      run: |
+        kubectl create namespace tanzu-system-ingress --dry-run=client -o yaml  | kubectl apply -f -
+
+        # Install contour ingress controller
+        helm install contour bitnami/contour -n tanzu-system-ingress
+
+        # Sleep for 30 seconds to make sure external IP address is assigned.
+        sleep 30
+
+    - name: Add DNS record
+      run: |
+        EXTERNAL_IP=$(kubectl get services --namespace tanzu-system-ingress contour-envoy --output jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        echo "The external_ip of contour ingress controller: " $EXTERNAL_IP
+        az network dns record-set a add-record \
+          --resource-group ${{ env.CLUSTER_RESOURCE_GROUP }} \
+          --zone-name ${{ env.DOMAIN_NAME }} \
+          --record-set-name "*" \
+          --ipv4-address ${EXTERNAL_IP}
+
+    - name: Create Cluster Issuer for Ingress Controller using Letsencrypt
+      run: kubectl apply -f ${GITHUB_WORKSPACE}/contour/cluster-issuer.yml
+
+    - name: Install Harbor Registry
+      run: |
+        # Create namespace harbor if it doesn't exist
+        kubectl create namespace harbor --dry-run=client -o yaml  | kubectl apply -f -
+
+        # Create certificate for Harbor TLS
+        kubectl apply -f ${GITHUB_WORKSPACE}/harbor/harbor-cert.yml -n harbor
+
+        # Install Harbor
+        helm install harbor bitnami/harbor -f ${GITHUB_WORKSPACE}/harbor/harbor-values.yml -n harbor \
+          --set harborAdminPassword=${{ secrets.HARBOR_PASSWORD }} \
+          --set externalURL=https://registry.${{ env.DOMAIN_NAME }} \
+          --set ingress.hosts.core=registry.${{ env.DOMAIN_NAME }} \
+          --set ingress.hosts.notary=notary.${{ env.DOMAIN_NAME }} \
+          --set persistence.imageChartStorage.azure.accountname=${{ env.AZURE_STORAGE_ACCOUNT_NAME }} \
+          --set persistence.imageChartStorage.azure.accountkey=${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
+
+    - name: Install Kubeapps
+      run: |
+        # Create namespace kubeapps if it doesn't exist
+        kubectl create namespace kubeapps --dry-run=client -o yaml  | kubectl apply -f -
+
+        # Install kubeapps
+        helm install kubeapps --namespace kubeapps bitnami/kubeapps -f ${GITHUB_WORKSPACE}/kubeapps/kubeapps-values.yml \
+          --set ingress.hostname=kubeapps.${{ env.DOMAIN_NAME }}
