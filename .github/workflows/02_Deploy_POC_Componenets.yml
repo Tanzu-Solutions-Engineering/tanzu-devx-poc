@@ -96,6 +96,7 @@ jobs:
         kapp deploy -a flux -f https://github.com/fluxcd/flux2/releases/download/v0.15.0/install.yaml -y
 
         # Pull and extract the installation bundle
+        docker login registry.pivotal.io -u '${{ secrets.TANZU_NETWORK_USERNAME }}' -p '${{ secrets.TANZU_NETWORK_PASSWORD }}'
         imgpkg pull -b registry.pivotal.io/app-accelerator/acc-install-bundle:${{ env.ACC_VERSION }} \
           -o /tmp/acc-install-bundle
 
