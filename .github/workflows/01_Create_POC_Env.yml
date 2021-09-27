@@ -82,22 +82,22 @@ jobs:
 #     - name: Create Cluster Issuer for Ingress Controller using Letsencrypt
 #       run: kubectl apply -f ${GITHUB_WORKSPACE}/contour/cluster-issuer.yml
 
-    - name: Install Harbor Registry
-      run: |
-        # Create namespace harbor if it doesn't exist
-        kubectl create namespace harbor --dry-run=client -o yaml  | kubectl apply -f -
+#     - name: Install Harbor Registry
+#       run: |
+#         # Create namespace harbor if it doesn't exist
+#         kubectl create namespace harbor --dry-run=client -o yaml  | kubectl apply -f -
 
-        # Create certificate for Harbor TLS
-        kubectl apply -f ${GITHUB_WORKSPACE}/harbor/harbor-cert.yml -n harbor
+#         # Create certificate for Harbor TLS
+#         kubectl apply -f ${GITHUB_WORKSPACE}/harbor/harbor-cert.yml -n harbor
 
-        # Install Harbor
-        helm install harbor bitnami/harbor -f ${GITHUB_WORKSPACE}/harbor/harbor-values.yml -n harbor \
-          --set harborAdminPassword=${{ secrets.HARBOR_PASSWORD }} \
-          --set externalURL=https://registry.${{ env.DOMAIN_NAME }} \
-          --set ingress.hosts.core=registry.${{ env.DOMAIN_NAME }} \
-          --set ingress.hosts.notary=notary.${{ env.DOMAIN_NAME }} \
-          --set persistence.imageChartStorage.azure.accountname=${{ env.AZURE_STORAGE_ACCOUNT_NAME }} \
-          --set persistence.imageChartStorage.azure.accountkey=${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
+#         # Install Harbor
+#         helm install harbor bitnami/harbor -f ${GITHUB_WORKSPACE}/harbor/harbor-values.yml -n harbor \
+#           --set harborAdminPassword=${{ secrets.HARBOR_PASSWORD }} \
+#           --set externalURL=https://registry.${{ env.DOMAIN_NAME }} \
+#           --set ingress.hosts.core=registry.${{ env.DOMAIN_NAME }} \
+#           --set ingress.hosts.notary=notary.${{ env.DOMAIN_NAME }} \
+#           --set persistence.imageChartStorage.azure.accountname=${{ env.AZURE_STORAGE_ACCOUNT_NAME }} \
+#           --set persistence.imageChartStorage.azure.accountkey=${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
 
     - name: Install Kubeapps
       run: |
