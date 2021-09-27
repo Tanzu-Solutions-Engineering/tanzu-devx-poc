@@ -2,7 +2,6 @@ useHelm3: true
 allowNamespaceDiscovery: true
 ingress:
   enabled: true
-  certManager: true
   tls: true
   annotations:
     kubernetes.io/ingress.class: contour
