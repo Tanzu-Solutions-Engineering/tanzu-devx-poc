@@ -11,11 +11,6 @@ env:
   CLUSTER_NAME: TanzuCluster
   DOMAIN_NAME: ms.hyan.us
   AZURE_STORAGE_ACCOUNT_NAME: msharbor
-  KP_CLI_LINUX_RELEASE: https://network.pivotal.io/api/v2/products/build-service/releases/925788/product_files/1000629/download
-  TBS_VERSION: 1.2.2
-  TBS_DEPENDENCIES_VERSION: 100.0.150
-  TBS_DEPENDENCIES: https://network.pivotal.io/api/v2/products/tbs-dependencies/releases/943744/product_files/1022067/download
-  ACC_VERSION: 0.2.0
 
 jobs:
   deploy:
@@ -30,8 +25,6 @@ jobs:
 
     - name: Install Helm Tool
       uses: azure/setup-helm@v1
-#       with:
-#         version: 3.5.2
       id: install_helm
 
     - name: Login to Azure
@@ -56,19 +49,19 @@ jobs:
       run: |
         chmod -R +x "${GITHUB_WORKSPACE}/scripts"
 
-    - name: Install Cert-Manager
-      run: |
-        kubectl create namespace cert-manager --dry-run=client -o yaml  | kubectl apply -f -
+#     - name: Install Cert-Manager
+#       run: |
+#         kubectl create namespace cert-manager --dry-run=client -o yaml  | kubectl apply -f -
 
-        # Label the cert-manager namespace to disable resource validation
-        kubectl label namespace cert-manager certmanager.k8s.io/disable-validation=true
+#         # Label the cert-manager namespace to disable resource validation
+#         kubectl label namespace cert-manager certmanager.k8s.io/disable-validation=true
 
-        # Install cert-manager
-        helm install \
-          cert-manager jetstack/cert-manager \
-          --namespace cert-manager \
-          --version v1.4.1 \
-          --set installCRDs=true
+#         # Install cert-manager
+#         helm install \
+#           cert-manager jetstack/cert-manager \
+#           --namespace cert-manager \
+#           --version v1.4.1 \
+#           --set installCRDs=true
 
     - name: Install Contour Ingress Controller
       run: |
