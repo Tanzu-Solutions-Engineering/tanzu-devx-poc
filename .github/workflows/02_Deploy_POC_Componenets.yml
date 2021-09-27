@@ -107,6 +107,10 @@ jobs:
           --docker-server=registry.pivotal.io \
           --docker-username='${{ secrets.TANZU_NETWORK_USERNAME }}' \
           --docker-password='${{ secrets.TANZU_NETWORK_PASSWORD }}'
+        
+        export acc_registry__server=registry.pivotal.io
+        export acc_registry__username='${{ secrets.TANZU_NETWORK_USERNAME }}'
+        export acc_registry__password='${{ secrets.TANZU_NETWORK_PASSWORD }}'
 
         ytt -f /tmp/acc-install-bundle/config -f /tmp/acc-install-bundle/values.yml --data-values-env acc  \
           | kbld -f /tmp/acc-install-bundle/.imgpkg/images.yml -f- \
