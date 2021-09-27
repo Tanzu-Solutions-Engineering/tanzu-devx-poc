@@ -100,25 +100,24 @@ jobs:
         docker login registry.pivotal.io -u '${{ secrets.TANZU_NETWORK_USERNAME }}' -p '${{ secrets.TANZU_NETWORK_PASSWORD }}'
         imgpkg pull -b registry.pivotal.io/app-accelerator/acc-install-bundle:${{ env.ACC_VERSION }} \
           -o /tmp/acc-install-bundle
-
-        kubectl create namespace accelerator-system --dry-run=client -o yaml  | kubectl apply -f -
-
-        kubectl create secret \
-          docker-registry acc-image-regcred -n accelerator-system \
-          --docker-server=registry.pivotal.io \
-          --docker-username='${{ secrets.TANZU_NETWORK_USERNAME }}' \
-          --docker-password='${{ secrets.TANZU_NETWORK_PASSWORD }}'
         
         export acc_registry__server=registry.pivotal.io
         export acc_registry__username='${{ secrets.TANZU_NETWORK_USERNAME }}'
         export acc_registry__password='${{ secrets.TANZU_NETWORK_PASSWORD }}'
-
         ytt -f /tmp/acc-install-bundle/config -f /tmp/acc-install-bundle/values.yml --data-values-env acc  \
           | kbld -f /tmp/acc-install-bundle/.imgpkg/images.yml -f- \
           | kapp deploy -y -n accelerator-system -a accelerator -f- -y
 
         kubectl apply -f https://raw.githubusercontent.com/sample-accelerators/metadata/main/new-accelerator.yaml
-    
+                
+#        kubectl create namespace accelerator-system --dry-run=client -o yaml  | kubectl apply -f -
+#
+#        kubectl create secret \
+#          docker-registry acc-image-regcred -n accelerator-system \
+#          --docker-server=registry.pivotal.io \
+#          --docker-username='${{ secrets.TANZU_NETWORK_USERNAME }}' \
+#          --docker-password='${{ secrets.TANZU_NETWORK_PASSWORD }}'
+      
     - name: Install OOTB Application Accelerator Samples
       run: |
         wget -O $${{ env.ACC_SAMPLE_FILE }} --header="Authorization: Token ${{ secrets.TANZU_NETWORK_API_TOKEN }}" ${{ env.ACC_SAMPLE_DOWNLOAD }}
