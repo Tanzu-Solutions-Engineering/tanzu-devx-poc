@@ -96,20 +96,20 @@ jobs:
         kapp deploy -a flux -f https://github.com/fluxcd/flux2/releases/download/v0.15.0/install.yaml -y
 
         # Pull and extract the installation bundle
-        docker login registry.tanzu.vmware.com -u '${{ secrets.TANZU_NETWORK_USERNAME }}' -p '${{ secrets.TANZU_NETWORK_PASSWORD }}'
+        docker login registry.pivotal.io -u '${{ secrets.TANZU_NETWORK_USERNAME }}' -p '${{ secrets.TANZU_NETWORK_PASSWORD }}'
         imgpkg pull -b registry.pivotal.io/app-accelerator/acc-install-bundle:${{ env.ACC_VERSION }} \
           -o /tmp/acc-install-bundle
         kubectl create namespace accelerator-system --dry-run=client -o yaml  | kubectl apply -f -
-        export acc_registry__server=registry.tanzu.vmware.com
-        export acc_registry__username=yheng@vmware.com
-        export acc_registry__password='${{ secrets.TANZU_NETWORK_PASSWORD }}'
         
         kubectl create secret \
           docker-registry acc-image-regcred -n accelerator-system \
           --docker-server=registry.tanzu.vmware.com \
-          --docker-username=yheng@vmware.com \
+          --docker-username='${{ secrets.TANZU_NETWORK_USERNAME }}' \
           --docker-password='${{ secrets.TANZU_NETWORK_PASSWORD }}'
 
+        export acc_registry__secret_ref=acc-image-regcred
+        docker login registry.tanzu.vmware.com -u '${{ secrets.TANZU_NETWORK_USERNAME }}' -p '${{ secrets.TANZU_NETWORK_PASSWORD }}'
+        
         ytt -f /tmp/acc-install-bundle/config -f /tmp/acc-install-bundle/values.yml --data-values-env acc  \
           | kbld -f /tmp/acc-install-bundle/.imgpkg/images.yml -f- \
           | kapp deploy -y -n accelerator-system -a accelerator -f- -y
