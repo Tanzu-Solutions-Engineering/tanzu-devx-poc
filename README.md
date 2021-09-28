@@ -16,7 +16,7 @@ Before beginning to run Github Action pipeline, ensure that you have completed a
     - **TANZU_NETWORK_USERNAME**: Your username of Tanzu Network. Will be used download artifacts and retrieve images from Tanzu Network.  
     - **TANZU_NETWORK_PASSWORD**: Your password of Tanzu Network. Will be used download artifacts and retrieve images from Tanzu Network.  
 <br>
-- **Set Environment Variables in [Github Action pipeline](https://github.com/Tanzu-Solutions-Engineering/tanzu-devx-poc/blob/main/.github/workflows/deploy_tanzu_dev.yml)**:  
+- **Set Environment Variables in** [Github Action pipeline](https://github.com/Tanzu-Solutions-Engineering/tanzu-devx-poc/blob/main/.github/workflows/deploy_tanzu_dev.yml):  
 
     ```bash
     env:
